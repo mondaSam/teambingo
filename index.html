@@ -1,7 +1,421 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Colliers Office Bingo</title><style>*{box-sizing:border-box}body{margin:0;background:#eef3f8;color:#003b71;font:16px system-ui,sans-serif}main{max-width:740px;margin:24px auto;padding:24px;background:white;border-radius:18px;box-shadow:0 8px 32px #003b7115;text-align:center}header{font-size:30px;font-weight:800;letter-spacing:2px;border-bottom:4px solid #efb321;padding-bottom:16px}header small{display:block;font-size:12px;letter-spacing:3px}h1{font-size:36px;margin-bottom:0}p{color:#52677b}label{display:block;margin:20px 0 8px}input,button{font:inherit;border-radius:8px;padding:12px}input{border:1px solid #aebdca;width:100%;max-width:360px}button{background:#003b71;color:white;border:0;cursor:pointer;font-weight:650}#generate{display:block;margin:16px auto}.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin:5px 0}.grid strong{background:#003b71;color:white;padding:10px;border-radius:5px;font-size:24px}.square{background:#edf4fa;color:#003b71;border:1px solid #cbd9e7;aspect-ratio:1;min-width:0;padding:4px;font-size:clamp(10px,2.3vw,15px);overflow-wrap:anywhere}.marked{background:#003b71;color:white;border:3px solid #efb321}.secondary{background:#e8eef4;color:#003b71;margin-top:12px}button:focus-visible{outline:3px solid #efb321;outline-offset:2px}#current{font-size:clamp(28px,6vw,52px);padding:30px;background:#edf4fa;border-radius:12px}#history{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}#history span{background:#edf4fa;padding:8px;border-radius:6px}@media(max-width:500px){main{margin:0;padding:12px;border-radius:0}.grid{gap:3px}}
 
-[hidden]{display:none!important}body{background:linear-gradient(145deg,#e4edf6,#f7f9fc);min-height:100vh}main{max-width:680px;margin:32px auto;padding:32px}header{letter-spacing:3px;font-size:36px}header small{font-size:11px}h1{margin-top:26px}#setup{max-width:400px;margin:30px auto 12px;text-align:left}#setup input,#generate{max-width:none;width:100%}#generate{padding:16px}button:hover{filter:brightness(.95)}.square.marked:before{content:"✓";display:block;color:#efb321;font-size:20px}.square{font-weight:600}#status:not(:empty){background:#edf4fa;padding:15px;border-radius:10px}@media(max-width:500px){main{margin:0;padding:12px}.square{font-size:11px}}</style><main><header>COLLIERS <small>PROJECT LEADERS</small></header><h1>Office Bingo</h1><p>Monthly team social</p><section id="setup"><label for="name">Your name</label><input id="name" maxlength="60" placeholder="Enter your name"><button id="generate">Generate my bingo card</button></section><section id="game" hidden><h2 id="player"></h2><p>Mark a square when the host calls its phrase.</p><div class="grid" id="letters"></div><div class="grid" id="board"></div><h2 id="status" aria-live="polite"></h2><button id="reset" class="secondary">Start a new card</button></section></main><script>const WORDS=["You're on mute","Coffee break","Kahua","Quick question","Happy Friday","Project deadline","SharePoint","Excel formula","Follow-up email","Teams meeting","Budget change","Screen sharing","Monthly report","Site visit","Working remotely","KPI","Project manager","Technical issue","Lunch break","Action item","One last thing","Calendar invite","Let's circle back","Final invoice","Meeting reminder","You're breaking up","Can you see my screen?","PowerPoint","Outlook","Working overtime","Site inspection","Weekly update","Project kickoff","Meeting minutes","Status update","Cost estimate","Schedule review","Risk register","Change request","Project closeout","Please see attached","Deadline extension","Teamwork","Good morning","Document review","Lessons learned","Time sheet","Quality check","Progress report","Happy Monday"];
-function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-</script><script>
-let state;try{state=JSON.parse(localStorage.getItem('office-bingo-v1'))}catch(e){};const $=id=>document.getElementById(id);function save(){try{localStorage.setItem('office-bingo-v1',JSON.stringify(state))}catch(e){}}function render(){ $('setup').hidden=!!state;$('game').hidden=!state;if(!state)return;$('player').textContent=state.name+' — your card';$('letters').replaceChildren(...Array.from('BINGO',l=>{let d=document.createElement('strong');d.textContent=l;return d}));$('board').replaceChildren(...state.cells.map((w,i)=>{let b=document.createElement('button');b.textContent=w;b.className='square'+(state.marked.includes(i)?' marked':'');b.setAttribute('aria-pressed',state.marked.includes(i));b.onclick=()=>{if(i===12)return;state.marked=state.marked.includes(i)?state.marked.filter(x=>x!==i):[...state.marked,i];save();render()};return b}));let lines=[];for(let i=0;i<5;i++){lines.push(Array.from({length:5},(_,j)=>i*5+j),Array.from({length:5},(_,j)=>j*5+i))}lines.push([0,6,12,18,24],[4,8,12,16,20]);$('status').textContent=lines.some(l=>l.every(i=>state.marked.includes(i)))?'🎉 BINGO! Tell your host!':'';}
-$('generate').onclick=()=>{let name=$('name').value.trim();if(!name){$('name').focus();return}let cells=shuffle(WORDS).slice(0,24);cells.splice(12,0,'FREE SPACE');state={name,cells,marked:[12]};save();render()};$('reset').onclick=()=>{if(confirm('Discard your current card and marks?')){state=null;save();render()}};render();</script></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Colliers Office Bingo</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: linear-gradient(145deg,#e4edf6,#f7f9fc);
+    color: #003b71;
+    font: 16px system-ui,sans-serif;
+    min-height: 100vh;
+}
+
+main {
+    max-width: 680px;
+    margin: 32px auto;
+    padding: 32px;
+    background: white;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px #003b7115;
+    text-align: center;
+}
+
+header {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    border-bottom: 4px solid #efb321;
+    padding-bottom: 16px;
+}
+
+header small {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 3px;
+}
+
+h1 {
+    font-size: 36px;
+    margin-top: 26px;
+    margin-bottom: 0;
+}
+
+p {
+    color: #52677b;
+}
+
+label {
+    display: block;
+    margin: 20px 0 8px;
+}
+
+input, button {
+    font: inherit;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+input {
+    border: 1px solid #aebdca;
+    width: 100%;
+}
+
+button {
+    background: #003b71;
+    color: white;
+    border: 0;
+    cursor: pointer;
+    font-weight: 650;
+}
+
+button:hover {
+    filter: brightness(.95);
+}
+
+#setup {
+    max-width: 400px;
+    margin: 30px auto 12px;
+    text-align: left;
+}
+
+#generate {
+    display: block;
+    margin: 16px auto;
+    padding: 16px;
+    width: 100%;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(5,minmax(0,1fr));
+    gap: 5px;
+    margin: 5px 0;
+}
+
+.grid strong {
+    background: #003b71;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 24px;
+}
+
+.square {
+    background: #edf4fa;
+    color: #003b71;
+    border: 1px solid #cbd9e7;
+    aspect-ratio: 1;
+    min-width: 0;
+    padding: 4px;
+    font-size: clamp(10px,2.3vw,15px);
+    overflow-wrap: anywhere;
+    font-weight: 600;
+}
+
+.marked {
+    background: #003b71;
+    color: white;
+    border: 3px solid #efb321;
+}
+
+.square.marked:before {
+    content: "✓";
+    display: block;
+    color: #efb321;
+    font-size: 20px;
+}
+
+.secondary {
+    background: #e8eef4;
+    color: #003b71;
+    margin-top: 12px;
+}
+
+button:focus-visible {
+    outline: 3px solid #efb321;
+    outline-offset: 2px;
+}
+
+#status:not(:empty) {
+    background: #edf4fa;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+@media(max-width:500px) {
+    main {
+        margin: 0;
+        padding: 12px;
+        border-radius: 0;
+    }
+
+    .grid {
+        gap: 3px;
+    }
+
+    .square {
+        font-size: 11px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<main>
+
+    <header>
+        COLLIERS
+        <small>PROJECT LEADERS</small>
+    </header>
+
+    <h1>Office Bingo</h1>
+    <p>Monthly team social</p>
+
+    <section id="setup">
+
+        <label for="name">Your name</label>
+
+        <input
+            id="name"
+            maxlength="60"
+            placeholder="Enter your name"
+        >
+
+        <button id="generate">
+            Generate my bingo card
+        </button>
+
+    </section>
+
+    <section id="game" hidden>
+
+        <h2 id="player"></h2>
+
+        <p>Mark a square when the host calls its phrase.</p>
+
+        <div class="grid" id="letters"></div>
+
+        <div class="grid" id="board"></div>
+
+        <h2 id="status" aria-live="polite"></h2>
+
+        <button id="reset" class="secondary">
+            Start a new card
+        </button>
+
+    </section>
+
+</main>
+
+<script>
+
+const WORDS = [
+    "You're on mute",
+    "Coffee break",
+    "Kahua",
+    "Quick question",
+    "Happy Friday",
+    "SharePoint",
+    "Excel formula",
+    "Follow-up email",
+    "Teams meeting",
+    "Screen sharing",
+    "Site visit",
+    "Working remotely",
+    "Lunch break",
+    "Calendar invite",
+    "Let's circle back",
+    "You're breaking up",
+    "Can you see my screen?",
+    "PowerPoint",
+    "Outlook",
+    "Meeting minutes",
+    "Please see attached",
+    "Submit timesheet",
+    "Submit expenses",
+    "Let's take this offline",
+    "What's the delta?",
+    "Submit your MPSRs!",
+    "Can you hear me?",
+    "My camera is not working!",
+    "You're sharing the wrong screen",
+    "I have a hard stop",
+    "Let's touch base",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Monitor",
+    "Phone",
+    "Mouse",
+    "Keyboard",
+    "Headphones",
+    "Desk",
+    "Microphone",
+    "Webcam",
+    "Laptop",
+    "Office chair",
+    "Notebook",
+    "Water bottle",
+    "Coffee mug",
+    "Charger"
+];
+
+function shuffle(a) {
+    a = [...a];
+
+    for (let i = a.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+
+    return a;
+}
+
+let state;
+
+try {
+    state = JSON.parse(
+        localStorage.getItem('office-bingo-v2')
+    );
+} catch(e) {}
+
+const $ = id => document.getElementById(id);
+
+function save() {
+    try {
+        localStorage.setItem(
+            'office-bingo-v2',
+            JSON.stringify(state)
+        );
+    } catch(e) {}
+}
+
+function render() {
+
+    $('setup').hidden = !!state;
+    $('game').hidden = !state;
+
+    if (!state) return;
+
+    $('player').textContent =
+        state.name + ' — your card';
+
+    $('letters').replaceChildren(
+        ...Array.from('BINGO', l => {
+            let d = document.createElement('strong');
+            d.textContent = l;
+            return d;
+        })
+    );
+
+    $('board').replaceChildren(
+        ...state.cells.map((w, i) => {
+
+            let b = document.createElement('button');
+
+            b.textContent = w;
+
+            b.className =
+                'square' +
+                (state.marked.includes(i) ? ' marked' : '');
+
+            b.setAttribute(
+                'aria-pressed',
+                state.marked.includes(i)
+            );
+
+            b.onclick = () => {
+
+                if (i === 12) return;
+
+                state.marked = state.marked.includes(i)
+                    ? state.marked.filter(x => x !== i)
+                    : [...state.marked, i];
+
+                save();
+                render();
+            };
+
+            return b;
+        })
+    );
+
+    let lines = [];
+
+    for (let i = 0; i < 5; i++) {
+
+        lines.push(
+            Array.from({length:5}, (_,j) => i*5+j),
+            Array.from({length:5}, (_,j) => j*5+i)
+        );
+    }
+
+    lines.push(
+        [0,6,12,18,24],
+        [4,8,12,16,20]
+    );
+
+    $('status').textContent =
+        lines.some(
+            l => l.every(i => state.marked.includes(i))
+        )
+        ? '🎉 BINGO! Tell your host!'
+        : '';
+}
+
+$('generate').onclick = () => {
+
+    let name = $('name').value.trim();
+
+    if (!name) {
+        $('name').focus();
+        return;
+    }
+
+    let cells = shuffle(WORDS).slice(0,24);
+
+    cells.splice(12,0,'FREE SPACE');
+
+    state = {
+        name,
+        cells,
+        marked: [12]
+    };
+
+    save();
+    render();
+};
+
+$('reset').onclick = () => {
+
+    if (confirm('Discard your current card and marks?')) {
+
+        state = null;
+
+        save();
+        render();
+    }
+};
+
+render();
+
+</script>
+
+</body>
+</html>
